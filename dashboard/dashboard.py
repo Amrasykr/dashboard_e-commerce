@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 # Load Data
 @st.cache_data
 def load_data():
-    order_items_df = pd.read_csv("../data/order_items_dataset.csv")
-    products_df = pd.read_csv("../data/products_dataset.csv")
-    product_category_df = pd.read_csv("../data/product_category_name_translation.csv")
-    order_payments_df = pd.read_csv("../data/order_payments_dataset.csv")
-    orders_df = pd.read_csv("../data/orders_dataset.csv")
+    order_items_df = pd.read_csv("https://raw.githubusercontent.com/Amrasykr/dashboard_e-commerce/main/data/order_items_dataset.csv")
+    order_payments_df = pd.read_csv("https://raw.githubusercontent.com/Amrasykr/dashboard_e-commerce/main/data/order_payments_dataset.csv")
+    orders_df = pd.read_csv("https://raw.githubusercontent.com/Amrasykr/dashboard_e-commerce/main/data/orders_dataset.csv")
+    product_category_df = pd.read_csv("https://raw.githubusercontent.com/Amrasykr/dashboard_e-commerce/main/data/product_category_name_translation.csv")
+    products_df = pd.read_csv("https://raw.githubusercontent.com/Amrasykr/dashboard_e-commerce/main/data/products_dataset.csv")
     
     return order_items_df, products_df, product_category_df, order_payments_df, orders_df
 
