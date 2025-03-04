@@ -1,0 +1,8 @@
+# Ignore virtual environment
+venv/
+#/
+bernama/
+Bikin/
+environment/
+.ipynb_checkpoints/
+
