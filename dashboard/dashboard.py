@@ -23,27 +23,45 @@ sales_data = order_items_df.merge(
 )
 sales_data = sales_data.merge(product_category_df, on='product_category_name', how='left')
 
+# Konversi tanggal
+orders_df["order_purchase_timestamp"] = pd.to_datetime(orders_df["order_purchase_timestamp"])
+
+# Filter berdasarkan rentang tanggal
+st.sidebar.header("Filter Data")
+start_date = st.sidebar.date_input("Tanggal Mulai", orders_df["order_purchase_timestamp"].min().date())
+end_date = st.sidebar.date_input("Tanggal Akhir", orders_df["order_purchase_timestamp"].max().date())
+
+filtered_orders = orders_df[(orders_df["order_purchase_timestamp"].dt.date >= start_date) & (orders_df["order_purchase_timestamp"].dt.date <= end_date)]
+
+# Gabungkan order_items_df dengan filtered_orders
+filtered_sales_data = sales_data[sales_data["order_id"].isin(filtered_orders["order_id"])]
+
 # Analisis jumlah penjualan per kategori
-category_sales = sales_data.groupby('product_category_name_english').agg(
+category_sales = filtered_sales_data.groupby('product_category_name_english').agg(
     total_sales=('product_id', 'count')
 ).reset_index().sort_values(by='total_sales', ascending=False)
 
 # Analisis pendapatan per kategori
-category_revenue = sales_data.groupby('product_category_name_english').agg(
+category_revenue = filtered_sales_data.groupby('product_category_name_english').agg(
     total_revenue=('price', 'sum')
 ).reset_index().sort_values(by='total_revenue', ascending=False)
 
-# Menggabungkan order_payments_df dengan orders_df
+# Filter berdasarkan kategori
+category_options = ["All"] + list(category_sales["product_category_name_english"].unique())
+selected_category = st.sidebar.selectbox("Pilih Kategori Produk", category_options)
+
+if selected_category != "All":
+    filtered_sales_data = filtered_sales_data[filtered_sales_data["product_category_name_english"] == selected_category]
+
+# Distribusi metode pembayaran
+payment_counts = order_payments_df[order_payments_df["order_id"].isin(filtered_sales_data["order_id"])]
+payment_counts = payment_counts["payment_type"].value_counts()
+
+# Distribusi transaksi per bulan
 merged_df = order_payments_df.merge(orders_df, on="order_id", how="left")
 merged_df["order_purchase_timestamp"] = pd.to_datetime(merged_df["order_purchase_timestamp"])
 merged_df["order_month"] = merged_df["order_purchase_timestamp"].dt.to_period("M")
-
-# Distribusi metode pembayaran
-payment_counts = order_payments_df["payment_type"].value_counts()
-
-# Distribusi transaksi per bulan
 monthly_sales = merged_df.groupby("order_month").size()
-
 
 # Streamlit Dashboard
 st.title("E-Commerce Sales Dashboard")
@@ -63,7 +81,7 @@ with tabs[0]:
         ax.set_title("Top 10 Product Categories by Sales")
         st.pyplot(fig)
         with st.expander("Penjelasan Visualisasi"):
-            st.write("Grafik ini menunjukkan 10 kategori produk dengan penjualan tertinggi. Kategori 'bed_bath_table' memiliki penjualan terbanyak, diikuti oleh 'health_beauty' dan 'sports_leisure'.")
+            st.write("Grafik ini menunjukkan 10 kategori produk dengan penjualan tertinggi berdasarkan rentang tanggal yang dipilih.")
     
     with col2:
         fig, ax = plt.subplots(figsize=(6, 4))
@@ -73,7 +91,7 @@ with tabs[0]:
         ax.set_title("Top 10 Product Categories by Revenue")
         st.pyplot(fig)
         with st.expander("Penjelasan Visualisasi"):
-            st.write("Grafik ini menunjukkan 10 kategori produk dengan pendapatan tertinggi. 'health_beauty' memiliki pendapatan tertinggi, diikuti oleh 'watches_gifts' dan 'bed_bath_table'.")
+            st.write("Grafik ini menunjukkan 10 kategori produk dengan pendapatan tertinggi berdasarkan rentang tanggal yang dipilih.")
 
 with tabs[1]:
     st.subheader("Waktu dan Pola Pembayaran Pelanggan")
@@ -88,7 +106,7 @@ with tabs[1]:
         ax.set_title("Distribution of Payment Methods")
         st.pyplot(fig)
         with st.expander("Penjelasan Visualisasi"):
-            st.write("Grafik ini menunjukkan distribusi metode pembayaran yang digunakan pelanggan. Mayoritas pembayaran dilakukan menggunakan kartu kredit.")
+            st.write("Grafik ini menunjukkan distribusi metode pembayaran berdasarkan kategori produk yang dipilih.")
     
     with col2:
         fig, ax = plt.subplots(figsize=(6, 4))
@@ -98,4 +116,4 @@ with tabs[1]:
         ax.set_title("Monthly Sales Trend")
         st.pyplot(fig)
         with st.expander("Penjelasan Visualisasi"):
-            st.write("Grafik ini menunjukkan tren penjualan bulanan. Terlihat bahwa jumlah transaksi mengalami fluktuasi sepanjang waktu.")
+            st.write("Grafik ini menunjukkan tren penjualan bulanan berdasarkan kategori produk yang dipilih.")
